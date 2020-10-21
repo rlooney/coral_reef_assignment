@@ -1,0 +1,186 @@
+---
+title: "Coral reef assignment"
+author: "Raymond Looney"
+date: "10/18/2020"
+output: pdf_document
+---
+
+# Part A
+
+## Question 1:
+
+When we first sketched our graphs, Paulina took the approach of looking at what specifically impacts a person's opinion when considering to become a conservationist or not. Raymond looked at the entire system to explore which factors are making these decisions and impacting the socio-ecological system as a whole.
+
+```{r, echo= FALSE}
+require(png)
+img <- readPNG('Paulina_diagram.png',native = T)
+plot(NA,xlim=c(0,nrow(img)),ylim=c(0,ncol(img)),xaxt='n',yaxt='n',xlab='',ylab='')
+rasterImage(img,0,0,nrow(img),ncol(img))
+```
+
+Figure 1: Paulina's diagram
+
+```{r, echo=FALSE}
+require(png)
+img <- readPNG('Raymond_diagram.png',native = T)
+plot(NA,xlim=c(0,nrow(img)),ylim=c(0,ncol(img)),xaxt='n',yaxt='n',xlab='',ylab='')
+rasterImage(img,0,0,nrow(img),ncol(img))
+```
+
+Figure 2: Raymond's diagram
+
+## Question 2:
+
+When we came together to talk about what we did we both felt like Paulina did a great job added structure to the model which we used to build our final diagram. Raymond added all the extra bits and pieces that influence each mechanism indiviudally. After some painstaking drawing on an online software we were able to create the following diagram using both of our ideas.
+
+```{r, echo=FALSE}
+require(png)
+img <- readPNG('Final_diagram.png',native = T)
+plot(NA,xlim=c(0,nrow(img)),ylim=c(0,ncol(img)),xaxt='n',yaxt='n',xlab='',ylab='')
+rasterImage(img,0,0,nrow(img),ncol(img))
+```
+
+Figure 3: Diagram consisting of Raymond and Paulina's ideas.
+
+## Question 3:
+
+We were given the following equation:
+$$\frac{dx}{dt} = kx(1-x)(-1+j(1-C)-{\sigma}P(1-x)+{\phi}(2x-1))$$
+and asked to define the variables.
+
+* k = The number of new conservationists added to the population per time step (in this case per year)
+* x = the fraction of individuals in the population willing to participate in coral conservation
+* C = live coral cover on the reef
+* P = number of parrotfish
+* j = the rate of coral degradation (caused by algae cover, disease, natural disasters, etc.)
+* $\sigma$ = Fishing rate
+* $\phi$ = The sensitivity to the norms of society. (How easily influenced an individual is by others.)
+```{r, echo=FALSE}
+require(png)
+img <- readPNG('Parameters.png',native = T)
+plot(NA,xlim=c(0,nrow(img)),ylim=c(0,ncol(img)),xaxt='n',yaxt='n',xlab='',ylab='')
+rasterImage(img,0,0,nrow(img),ncol(img))
+```
+
+
+Table 1: The added in parameters of the provided differential equation.
+
+From finding out these variables and working through the differential equation we were able to create a new diagram depicting the elements involved in the equation. 
+
+```{r, echo=FALSE}
+require(png)
+img <- readPNG('Parameter_diagram.png',native = T)
+plot(NA,xlim=c(0,nrow(img)),ylim=c(0,ncol(img)),xaxt='n',yaxt='n',xlab='',ylab='')
+rasterImage(img,0,0,nrow(img),ncol(img))
+```
+
+Figure 4: Diagram made using the parameters we found for the differential equation
+
+
+
+## Question 5:
+
+``` {r coral}
+
+require(deSolve)
+
+# Initial values
+state <- c(X = 0.5) #proportion of total population that are conservationists
+times <- seq(0, 100, by = 0.1)
+
+# Parameters
+parameters <- c(k = 1.014,j = 1.68, s = 0.5, phi = 0.2, C = 0.3, P = 0.5)
+
+# Model
+consv <- function(t,state,parameters){
+  with(as.list(c(state,parameters)),{
+       dX <- k*X*(1-X)*(-1+j*(1-C)-s*P*(1-X)+phi*(2*X-1))
+      list(c(dX))   
+  })}
+
+# Solve model and plot results 
+out <- ode(y = state,times=times,func=consv,parms=parameters) 
+par(mfrow=c(1,1))
+
+plot(out[,1],out[,2],ylab='X',xlab='time',las=1)
+
+```
+Figure 5. Fraction of individuals in the population willing to participate in coral conservation. 
+
+
+(a) What are the long-term dynamics of the system with the default parameters given below?
+
+When half the population are already conservationists and live coral cover and Parrotfish abundance are both at 50%, the long-term dynamics of the system go to zero, meaning that when coral and Parrotfish are fairly healthy, fewer people will have an opinion on coral conservation. However, once live coral cover decreases to 30%, the proportion of people who become conservationists begins to increase.
+
+(b) What are the most important parameters in determining long-term dynamics? 
+
+The most important parameters in determining long-term dynamics in this system are live coral cover. As Parrotfish abundance decreases, the proportion of people willing to participate in coral conservation continues to decrease, therefore, it is not an important parameter.
+
+
+
+# PART B:
+
+George, Rose, Paulina, and myself made the following diagram that consists of both the social and ecological aspects impacting the system described above. In this model we decided to change 
+
+```{r, echo=FALSE}
+require(png)
+img <- readPNG('Group_diagram.png',native = T)
+plot(NA,xlim=c(0,nrow(img)),ylim=c(0,ncol(img)),xaxt='n',yaxt='n',xlab='',ylab='')
+rasterImage(img,0,0,nrow(img),ncol(img))
+```
+
+We predict the long term dynamics will favor microalgae as their competitive dominance between species has a large impact on the rest of the system. We also believe that coral and parrotfish will have the largest impact on the system, which will increase or greatly decrease the amount of microalgae, change in conservation opinion, etc.
+
+```{r}
+# Coupled socio-environmental coral reef model 
+# Created by Easton R. White
+# Edited on 7-Aug-2019
+# From Thampi et al. 2018 paper https://www.nature.com/articles/s41598-018-20341-0#Sec6
+
+require(deSolve)
+coupled_model <- function(Time, State, Pars) {
+  with(as.list(c(State, Pars)), {
+    dM <-  a*M*C - (P*M)/(M+T) + gamma*M*T
+    dC <-  r*T*C - d*C - a*M*C
+    dT <- (P*M)/(M+T) - gamma*M*T - r*T*C + d*C
+    dP <- s*P*(1 - P/C) - sigma*P*(1 - X)
+    dX <- kappa*X*(1 - X)*(-1 + j*(1 - C) - sigma*P*(1 - X) + phi*(2*X - 1))
+    return(list(c(dM,dC,dT,dP,dX)))  
+  })
+}
+
+pars <- c(a = 0.1, gamma = 0.8, r = 1.0, d = 0.44, s = 0.49, sigma = 0.5, kappa= 1.014, j=1.68, phi = 0.2)
+
+
+yini  <- c(M = 0.05, C = 0.9, T = 0.05, P = 0.4, X = 0.5)
+times <- seq(0, 100, by = 0.1)
+out   <- ode(yini, times, coupled_model, pars)
+
+par(mfrow=c(1,2))
+matplot(out[ , 1], out[ , 2:5], type = "l", xlab = "time", ylab = "Percent cover",main = "Ecological dynamics", lwd = 2,ylim=c(0,1))
+legend('topright',legend = c('macroalgae','coral reef','turf algae','parrotfish'),col = c(1,2,3,4),pch = 18)
+
+matplot(out[ , 1], out[ , 6], type = "l", xlab = "time", ylab = "Fraction that are conservationists",main = "Conservation opinion", lwd = 2,ylim=c(0,1),col=5)
+```
+
+a.) The model shows that the long-term dynamics of the system will be dominated by microalgae if the system doesn't contain the necessary controls. Microalgae will decrease coral & thus parrotfish abundance, which will increase the number of people that want to become conservationists when there is no coral.
+
+b.) We found that the most important parameters in determining the long-term dynamics of our model system are gamma (competition between turf algae and microalgae). When this constant is changed, the model predicts something much different where the algae isnt completely dominant over the system due to macroalgae growing very slow and thus being unable to take over the system. We also found that sigma (fishing rate) has a large effect on the long term-dynamics of the system. When sigma is low, the system rebounds and is able to sustain itself for longer. This shows some evidence that parrotfish have a big influence on the system, and shows some top-down pressure acting upon the system. The last parameter we found to be important to our model was j (sensitivity to coral abundance) which explains how individuals react to the abundance of coral.
+
+#PART C:
+
+## Question 11: 
+
+The results from the model matched pretty closely with what I thought would impact the system in the long-term. We predicted that the algae would dominate the system unless governed bysome outside control, which we found to be true. We also predicted that parrotfish would be an important parameter, which is true in the sense that the fishing rate is what brought back parrotfish abundance in the first place.
+
+## Question 12:
+
+Our flow diagrams changed completely. I believe that I started off making it over-complicated and including way too much in the system. After seeing Paulina's diagram we made a diagram that included both of our diagrams which was way too much. Then we dialed it back to match the model that we were given. Once we joined forces with the ecological group the diagram didn't change too much... We only added two or three things that we were able to connect with eachother which was very helpful. It was very important to work closely with people who studied another side of this system and could teach us why/how they included things we didn't even think of!
+
+## Question 13:
+
+When thinking about the paper we read regarding the consequences of racism in an urban environment, I think it would be extremely important to tie in how tourism in it's entirety is being used to damage the ecosystem and to hurt the poor, marginalized groups further. Our model did not include important things like the distribution and management of urban spaces, wealth stratification in the system, and perhaps adding a need to address inequality-driven heterogeneity in the environment.
+
+## Question 4:
+
+I think the collaborations between groups was very useful in this assignment. Being able to work first with Paulina to understand our system the best and then to work with George and Rose to incorporate their system and work together on how it all ties together was extremely informative and helpful. The least useful part of this assignment was what I recognized in the previous question, and not implementing it into the model. I would have liked perhaps a Part D of this assignment to add in parameters (as a group?) in order to address the racial inequality and the inequity that is happening to the urban ecosystem as a result of capitalist tourism
